@@ -63,6 +63,7 @@ def _html_page(title, message, ok=True):
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{APP_NAME} – {title}</title>
+<meta name="robots" content="noindex,nofollow" />
 <style>
   :root {{
     color-scheme: light dark;
@@ -76,6 +77,7 @@ def _html_page(title, message, ok=True):
   .card {{
     border-radius: 16px; padding: 28px; max-width: 640px; width: calc(100% - 32px);
     border: 2px solid {('#2e7d32' if ok else '#c62828')};
+    box-shadow: 0 12px 28px rgba(0,0,0,.08);
   }}
   h1 {{ margin: 0 0 8px 0; font-size: 1.4rem; }}
   p  {{ margin: 4px 0 0 0; line-height: 1.5; }}
@@ -109,9 +111,15 @@ def healthz():
     try:
         conn = get_conn()
         conn.execute("SELECT 1;")
-        return _no_store(jsonify(status="ok"))
+        return _no_store(jsonify(status="ok", time=datetime.utcnow().isoformat()))
     except Exception as e:
         return _no_store(jsonify(status="error", detail=str(e))), 500
+
+@app.get("/robots.txt")
+def robots():
+    resp = make_response("User-agent: *\nDisallow: /", 200)
+    resp.headers["Content-Type"] = "text/plain; charset=utf-8"
+    return _no_store(resp)
 
 @app.post("/register")
 def register():
